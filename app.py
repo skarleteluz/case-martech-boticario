@@ -51,21 +51,44 @@ kpi3.metric("ROAS Geral", f"{formata_num(roas_total)}x")
 kpi4.metric("Status da Meta", "Foco Perfumaria")
 
 # ---------------------------------------------------------
-# BLOCO 1: VISÃO GERAL DE CANAIS
+# BLOCO 1: VISÃO GERAL (CANAL E CATEGORIA LADO A LADO)
 # ---------------------------------------------------------
-st.header("1. Eficiência Real por Canal")
-fig_combo = go.Figure()
-fig_combo.add_trace(go.Bar(x=df_canal['Canal'], y=df_canal['Investimento_Mkt'], name='Investimento (R$)', marker_color='#E2E2E2'))
-fig_combo.add_trace(go.Scatter(x=df_canal['Canal'], y=df_canal['ROAS'], name='ROAS', yaxis='y2', line=dict(color='#D4AF37', width=4), marker=dict(size=10)))
+st.header("1. Eficiência Real: Visão Comparativa")
+col_canal, col_cat = st.columns(2)
 
-fig_combo.update_layout(
-    title="Volume de Investimento vs. Retorno (ROAS)",
-    yaxis=dict(title="Investimento (R$)"),
-    yaxis2=dict(title="ROAS", overlaying='y', side='right'),
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-    template="simple_white", separators=',.'
-)
-st.plotly_chart(fig_combo, use_container_width=True)
+with col_canal:
+    # Gráfico por Canal
+    fig_combo = go.Figure()
+    fig_combo.add_trace(go.Bar(x=df_canal['Canal'], y=df_canal['Investimento_Mkt'], name='Investimento (R$)', marker_color='#E2E2E2'))
+    fig_combo.add_trace(go.Scatter(x=df_canal['Canal'], y=df_canal['ROAS'], name='ROAS', yaxis='y2', line=dict(color='#D4AF37', width=4), marker=dict(size=10)))
+
+    fig_combo.update_layout(
+        title="Performance por Canal",
+        yaxis=dict(title="Investimento (R$)"),
+        yaxis2=dict(title="ROAS", overlaying='y', side='right'),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        template="simple_white", separators=',.'
+    )
+    st.plotly_chart(fig_combo, use_container_width=True)
+
+with col_cat:
+    # Métricas por Categoria
+    df_cat = df.groupby('Categoria_Anunciada').agg({'Investimento_Mkt': 'sum', 'Receita_Gerada': 'sum'}).reset_index()
+    df_cat['ROAS'] = df_cat['Receita_Gerada'] / df_cat['Investimento_Mkt']
+    
+    # Gráfico por Categoria
+    fig_cat = go.Figure()
+    fig_cat.add_trace(go.Bar(x=df_cat['Categoria_Anunciada'], y=df_cat['Investimento_Mkt'], name='Investimento (R$)', marker_color='#E2E2E2'))
+    fig_cat.add_trace(go.Scatter(x=df_cat['Categoria_Anunciada'], y=df_cat['ROAS'], name='ROAS', yaxis='y2', line=dict(color='#004731', width=4), marker=dict(size=10)))
+
+    fig_cat.update_layout(
+        title="Performance por Categoria",
+        yaxis=dict(title="Investimento (R$)"),
+        yaxis2=dict(title="ROAS", overlaying='y', side='right'),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        template="simple_white", separators=',.'
+    )
+    st.plotly_chart(fig_cat, use_container_width=True)
 
 # ---------------------------------------------------------
 # NOVO BLOCO: MATRIZ DE PERFORMANCE (CANAL X CATEGORIA)
