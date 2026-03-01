@@ -3,22 +3,18 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# Função auxiliar para formatação brasileira (milhar com ponto, decimal com vírgula)
+# Funções auxiliares para formatação brasileira
 def formata_br(valor, prefixo="R$ "):
-    if pd.isna(valor):
-        return "N/A"
-    # Formata com padrão americano primeiro, depois inverte separadores
+    if pd.isna(valor): return "N/A"
     formatado = f"{valor:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
     return f"{prefixo}{formatado}"
 
 def formata_num(valor):
-    # Formata apenas o número com vírgula decimal (ex: 9,86)
     return f"{valor:.2f}".replace(".", ",")
 
-# Configuração da página e Identidade Visual (Cores Boticário)
+# Configuração da página e Identidade Visual
 st.set_page_config(page_title="Martech Analytics | Case Boticário", layout="wide")
 
-# Estilo CSS para cores da marca e cartões de métricas
 st.markdown("""
     <style>
     .main { background-color: #f5f5f5; }
@@ -27,7 +23,6 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 1. Carregamento e Processamento de Dados
 @st.cache_data
 def load_data():
     df = pd.read_csv('Case_Midia_Produto.csv')
@@ -36,114 +31,85 @@ def load_data():
 df = load_data()
 
 # Métricas consolidadas
-df_canal = df.groupby('Canal').agg({
-    'Investimento_Mkt': 'sum', 
-    'Receita_Gerada': 'sum'
-}).reset_index()
+df_canal = df.groupby('Canal').agg({'Investimento_Mkt': 'sum', 'Receita_Gerada': 'sum'}).reset_index()
 df_canal['ROAS'] = df_canal['Receita_Gerada'] / df_canal['Investimento_Mkt']
 
 # ---------------------------------------------------------
 # CABEÇALHO & KPIs
 # ---------------------------------------------------------
-st.title("📊 Análise de Performance: Campanhas de Inverno")
+st.title("📊 Dashboard de Performance: Campanhas de Inverno")
 st.markdown("---")
 
-col_kpi1, col_kpi2, col_kpi3, col_kpi4 = st.columns(4)
+kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 inv_total = df['Investimento_Mkt'].sum()
 rec_total = df['Receita_Gerada'].sum()
 roas_total = rec_total / inv_total
 
-# Aplicando a formatação brasileira nos KPIs
-col_kpi1.metric("Investimento Total", formata_br(inv_total))
-col_kpi2.metric("Receita Gerada", formata_br(rec_total))
-col_kpi3.metric("ROAS Geral", f"{formata_num(roas_total)}x")
-col_kpi4.metric("Meta", "Perfumaria", delta_color="normal")
+kpi1.metric("Investimento Total", formata_br(inv_total))
+kpi2.metric("Receita Gerada", formata_br(rec_total))
+kpi3.metric("ROAS Geral", f"{formata_num(roas_total)}x")
+kpi4.metric("Status da Meta", "Foco Perfumaria")
 
 # ---------------------------------------------------------
 # BLOCO 1: VISÃO GERAL DE CANAIS
 # ---------------------------------------------------------
 st.header("1. Eficiência Real por Canal")
-col_graf1, col_text1 = st.columns([2, 1])
+fig_combo = go.Figure()
+fig_combo.add_trace(go.Bar(x=df_canal['Canal'], y=df_canal['Investimento_Mkt'], name='Investimento (R$)', marker_color='#E2E2E2'))
+fig_combo.add_trace(go.Scatter(x=df_canal['Canal'], y=df_canal['ROAS'], name='ROAS', yaxis='y2', line=dict(color='#D4AF37', width=4), marker=dict(size=10)))
 
-with col_graf1:
-    fig_combo = go.Figure()
-    
-    # Barras de Investimento
-    fig_combo.add_trace(go.Bar(
-        x=df_canal['Canal'], 
-        y=df_canal['Investimento_Mkt'], 
-        name='Investimento (R$)', 
-        marker_color='#E2E2E2'
-    ))
-    
-    # Linha de ROAS
-    fig_combo.add_trace(go.Scatter(
-        x=df_canal['Canal'], 
-        y=df_canal['ROAS'], 
-        name='ROAS', 
-        yaxis='y2', 
-        line=dict(color='#D4AF37', width=4),
-        marker=dict(size=10)
-    ))
-    
-    fig_combo.update_layout(
-        title="Volume de Investimento vs. Retorno (ROAS)",
-        yaxis=dict(title="Investimento (R$)"),
-        yaxis2=dict(title="ROAS", overlaying='y', side='right'),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        template="simple_white",
-        # ESSENCIAL: Configura o Plotly para usar vírgula decimal e ponto de milhar
-        separators=',.'
-    )
-    st.plotly_chart(fig_combo, use_container_width=True)
-
-with col_text1:
-    st.info(f"""
-    **Principais Insights:**
-    - O **Google Search** é o grande motor de rentabilidade da conta.
-    - A **Mídia Programática** apresenta o menor ROAS ({formata_num(0.25)}), indicando que o tráfego de baixo custo não está convertendo em vendas diretas.
-    - Canais com intenção de busca superam canais de alcance em conversão.
-    """)
+fig_combo.update_layout(
+    title="Volume de Investimento vs. Retorno (ROAS)",
+    yaxis=dict(title="Investimento (R$)"),
+    yaxis2=dict(title="ROAS", overlaying='y', side='right'),
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    template="simple_white", separators=',.'
+)
+st.plotly_chart(fig_combo, use_container_width=True)
 
 # ---------------------------------------------------------
-# BLOCO 2: DEEP DIVE CATEGORIAS (O CORAÇÃO DO CASE)
+# NOVO BLOCO: MATRIZ DE PERFORMANCE (CANAL X CATEGORIA)
 # ---------------------------------------------------------
-st.header("2. O Desafio da Perfumaria e Influenciadores")
-col_graf2, col_graf3 = st.columns(2)
+st.header("2. Onde cada Canal brilha? (Afinidade)")
 
-with col_graf2:
-    df_perf = df[df['Categoria_Anunciada'] == 'Perfumaria'].groupby('Canal').agg({
-        'Investimento_Mkt': 'sum', 
-        'Receita_Gerada': 'sum'
-    }).reset_index()
-    df_perf['ROAS'] = df_perf['Receita_Gerada'] / df_perf['Investimento_Mkt']
-    
-    fig_perf = px.bar(
-        df_perf, x='Canal', y='ROAS', 
-        title="ROAS em Perfumaria (Meta do Trimestre)",
-        color_discrete_sequence=['#004731'], 
-        text_auto='.2f'
-    )
-    fig_perf.update_layout(separators=',.')
-    st.plotly_chart(fig_perf, use_container_width=True)
-    st.warning(f"Ponto de Atenção: Influenciadores em Perfumaria operam abaixo do break-even (ROAS {formata_num(0.84)}).")
+# Preparação dos dados agrupados por Canal e Categoria
+df_matriz = df.groupby(['Canal', 'Categoria_Anunciada']).agg({
+    'Investimento_Mkt': 'sum',
+    'Receita_Gerada': 'sum'
+}).reset_index()
+df_matriz['ROAS'] = df_matriz['Receita_Gerada'] / df_matriz['Investimento_Mkt']
 
-with col_graf3:
-    df_influ = df[df['Canal'] == 'Influenciadores'].groupby('Categoria_Anunciada').agg({
-        'Investimento_Mkt': 'sum', 
-        'Receita_Gerada': 'sum'
-    }).reset_index()
-    df_influ['ROAS'] = df_influ['Receita_Gerada'] / df_influ['Investimento_Mkt']
-    
-    fig_influ = px.bar(
-        df_influ, x='Categoria_Anunciada', y='ROAS', 
-        title="Performance de Influenciadores por Categoria",
-        color_discrete_sequence=['#D4AF37'], 
-        text_auto='.2f'
-    )
-    fig_influ.update_layout(separators=',.')
-    st.plotly_chart(fig_influ, use_container_width=True)
-    st.success("Insight: O canal de Influenciadores brilha na categoria Maquiagem.")
+fig_matriz = px.bar(
+    df_matriz, 
+    x='Categoria_Anunciada', 
+    y='ROAS', 
+    color='Canal', 
+    barmode='group',
+    title='Comparativo de ROAS: Categorias por Canal de Mídia',
+    color_discrete_map={
+        'Google Search': '#004731',      # Verde Boticário
+        'Influenciadores': '#D4AF37',    # Dourado
+        'Programática': '#C0C0C0'        # Cinza
+    },
+    text_auto='.2f'
+)
+
+fig_matriz.update_layout(
+    xaxis_title="Categoria do Produto",
+    yaxis_title="ROAS (Eficiência)",
+    legend_title="Canais",
+    template="simple_white",
+    separators=',.'
+)
+
+st.plotly_chart(fig_matriz, use_container_width=True)
+
+st.info("""
+**Análise da Matriz:**
+- O **Google Search** domina a conversão em todas as categorias, especialmente em **Perfumaria**.
+- **Influenciadores** mostram excelente performance em **Maquiagem**, mas enfrentam desafios em Perfumaria.
+- A **Mídia Programática** tem uma performance linearmente baixa, sugerindo necessidade de revisão criativa ou de público.
+""")
 
 # ---------------------------------------------------------
 # BLOCO 3: CONCLUSÃO E RECOMENDAÇÃO
@@ -156,16 +122,16 @@ rec_col1, rec_col2, rec_col3 = st.columns(3)
 with rec_col1:
     st.success("🚀 **Prioridade 1: Google Search**")
     st.write(f"Alocação sugerida: **{formata_br(35000)}**")
-    st.write(f"Foco: Termos de fundo de funil para Perfumaria (ROAS {formata_num(9.86)}x).")
+    st.write(f"Foco: Perfumaria (ROAS {formata_num(9.86)}x).")
 
 with rec_col2:
     st.warning("📸 **Prioridade 2: Influenciadores**")
     st.write(f"Alocação sugerida: **{formata_br(10000)}**")
-    st.write(f"Foco: Escalar Maquiagem e manter o branding em Perfumaria.")
+    st.write(f"Foco: Maquiagem (ROAS {formata_num(3.99)}x).")
 
 with rec_col3:
     st.error("📉 **Prioridade 3: Programática**")
     st.write(f"Alocação sugerida: **{formata_br(5000)}**")
-    st.write("Foco: Apenas Remarketing dinâmico para recuperação de carrinho.")
+    st.write("Foco: Remarketing de fundo de funil.")
 
 st.balloons()
