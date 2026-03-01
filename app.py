@@ -48,7 +48,7 @@ roas_total = rec_total / inv_total
 kpi1.metric("Investimento Total", formata_br(inv_total))
 kpi2.metric("Receita Gerada", formata_br(rec_total))
 kpi3.metric("ROAS Geral", f"{formata_num(roas_total)}x")
-kpi4.metric("Status da Meta", "Foco Perfumaria")
+kpi4.metric("Meta", "Perfumaria")
 
 # ---------------------------------------------------------
 # BLOCO 1: VISÃO GERAL (CANAL E CATEGORIA LADO A LADO)
@@ -79,7 +79,7 @@ with col_cat:
     # Gráfico por Categoria
     fig_cat = go.Figure()
     fig_cat.add_trace(go.Bar(x=df_cat['Categoria_Anunciada'], y=df_cat['Investimento_Mkt'], name='Investimento (R$)', marker_color='#E2E2E2'))
-    fig_cat.add_trace(go.Scatter(x=df_cat['Categoria_Anunciada'], y=df_cat['ROAS'], name='ROAS', yaxis='y2', line=dict(color='#004731', width=4), marker=dict(size=10)))
+    fig_cat.add_trace(go.Scatter(x=df_cat['Categoria_Anunciada'], y=df_cat['ROAS'], name='ROAS', yaxis='y2', line=dict(color='#D4AF37', width=4), marker=dict(size=10)))
 
     fig_cat.update_layout(
         title="Performance por Categoria",
@@ -158,3 +158,4 @@ with rec_col3:
     st.write("Foco: Remarketing de fundo de funil.")
 
 st.balloons()
+
