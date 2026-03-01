@@ -137,3 +137,4 @@ st.table(pd.DataFrame({
 }))
 
 st.success("🎯 Foco em canais de intenção (Search) garante o atingimento da meta de Perfumaria.")
+
