@@ -47,7 +47,6 @@ roas_global = rec_total / inv_total
 k1.metric("Investimento Total (Spend)", formata_br(inv_total))
 k2.metric("Receita Total Gerada", formata_br(rec_total))
 k3.metric("ROAS Global", f"{formata_num(roas_global)}x")
-k4.metric("Meta", "Perfumaria")
 
 # --- SEÇÃO 1: EFICIÊNCIA POR CANAL ---
 st.header("1. Eficiência Real por Canal")
@@ -121,4 +120,5 @@ with rec_col3:
     st.write("Foco: Remarketing de fundo de funil.")
 
 st.balloons()
+
 
