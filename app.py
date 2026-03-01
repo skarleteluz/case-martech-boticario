@@ -1,21 +1,20 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-# 1. Configuração da Página e Estilo Boticário
-st.set_page_config(page_title="Martech Analytics | Grupo Boticário", layout="wide")
+# 1. Configuração da Página
+st.set_page_config(page_title="Martech Analytics | Case Boticário", layout="wide")
 
-# CSS customizado para as cores da marca
-st.markdown("""
-    <style>
-    .main { background-color: #F2F2F2; }
-    .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; border-left: 5px solid #004731; }
-    h1, h2, h3 { color: #004731; }
-    </style>
-    """, unsafe_allow_html=True)
+# Configuração de Estilo e Cores (Paleta O Boticário)
+boticario_green = "#004731"
+boticario_gold = "#D4AF37"
+neutral_gray = "#F2F2F2"
+text_color = "#575756"
 
-# 2. Carregamento de Dados
+sns.set_theme(style="white")
+
+# 2. Carregamento e Processamento de Dados
 @st.cache_data
 def load_data():
     df = pd.read_csv('Case_Midia_Produto.csv')
@@ -23,95 +22,72 @@ def load_data():
 
 df = load_data()
 
-# Cálculos Base
-df_canal = df.groupby('Canal').agg({'Investimento_Mkt': 'sum', 'Receita_Gerada': 'sum'}).reset_index()
+# Cálculos Consolidados
+df_canal = df.groupby('Canal').agg({
+    'Investimento_Mkt': 'sum', 
+    'Receita_Gerada': 'sum'
+}).reset_index()
 df_canal['ROAS'] = df_canal['Receita_Gerada'] / df_canal['Investimento_Mkt']
-
-# ---------------------------------------------------------
-# SIDEBAR
-# ---------------------------------------------------------
-st.sidebar.image("https://upload.wikimedia.org/wikipedia/pt/e/e0/Logotipo_do_Grupo_Botic%C3%A1rio.png", width=150)
-st.sidebar.title("Martech Analytics")
-st.sidebar.info("Análise de Performance: Campanhas de Inverno")
+df_canal = df_canal.sort_values('ROAS', ascending=False)
 
 # ---------------------------------------------------------
 # HEADER & KPIs
 # ---------------------------------------------------------
-st.title("📊 Dashboard de Performance de Mídia")
+st.title("📊 Dashboard de Performance: Campanhas de Inverno")
+st.markdown(f"<p style='color:{text_color};'>Análise estratégica de Mídia e Performance para meta de Perfumaria.</p>", unsafe_allow_html=True)
 st.markdown("---")
 
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
-total_inv = df['Investimento_Mkt'].sum()
-total_rec = df['Receita_Gerada'].sum()
-total_roas = total_rec / total_inv
+inv_total = df['Investimento_Mkt'].sum()
+rec_total = df['Receita_Gerada'].sum()
+roas_total = rec_total / inv_total
 
-kpi1.metric("Investimento Total", f"R$ {total_inv:,.0f}")
-kpi2.metric("Receita Gerada", f"R$ {total_rec:,.0f}")
-kpi3.metric("ROAS Geral", f"{total_roas:.2f}x")
-kpi4.metric("Canais Analisados", "3")
-
-# ---------------------------------------------------------
-# PERGUNTA 1: ROAS Real por Canal (Combo Chart)
-# ---------------------------------------------------------
-st.header("1. Eficiência por Canal (ROAS)")
-col1, col2 = st.columns([2, 1])
-
-with col1:
-    fig_combo = go.Figure()
-    fig_combo.add_trace(go.Bar(x=df_canal['Canal'], y=df_canal['Investimento_Mkt'], name='Investimento (R$)', marker_color='#E2E2E2'))
-    fig_combo.add_trace(go.Scatter(x=df_canal['Canal'], y=df_canal['ROAS'], name='ROAS', yaxis='y2', line=dict(color='#D4AF37', width=4), marker=dict(size=10)))
-    
-    fig_combo.update_layout(
-        title="Investimento vs. ROAS por Canal",
-        yaxis=dict(title="Investimento (R$)"),
-        yaxis2=dict(title="ROAS", overlaying='y', side='right'),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-    )
-    st.plotly_chart(fig_combo, use_container_width=True)
-
-with col2:
-    st.write("**Insight:**")
-    st.write("""
-    - O **Google Search** é o canal mais eficiente.
-    - A **Mídia Programática** tem volume, mas a menor eficiência de conversão direta.
-    """)
+kpi1.metric("Investimento Total", f"R$ {inv_total:,.2f}")
+kpi2.metric("Receita Gerada", f"R$ {rec_total:,.2f}")
+kpi3.metric("ROAS Médio", f"{roas_total:.2f}x")
+kpi4.metric("Status Meta", "Foco Perfumaria")
 
 # ---------------------------------------------------------
-# PERGUNTA 2 & 3: Foco Perfumaria e Influenciadores
+# BLOCO 1: VISÃO GERAL (COMBO CHART SEABORN)
 # ---------------------------------------------------------
-st.header("2. Deep Dive: Perfumaria & Influenciadores")
-col3, col4 = st.columns(2)
+st.header("1. Investimento vs. Eficiência por Canal")
+fig1, ax1 = plt.subplots(figsize=(12, 6))
 
-with col3:
-    # Filtro Perfumaria
-    df_perf = df[df['Categoria_Anunciada'] == 'Perfumaria'].groupby('Canal').agg({'Investimento_Mkt': 'sum', 'Receita_Gerada': 'sum'}).reset_index()
+# Barras de Investimento
+sns.barplot(data=df_canal, x='Canal', y='Investimento_Mkt', color='#E2E2E2', ax=ax1)
+ax1.set_ylabel('Investimento (R$)', fontweight='bold', color=text_color)
+ax1.set_xlabel('')
+
+# Eixo Duplo para ROAS
+ax2 = ax1.twinx()
+sns.lineplot(data=df_canal, x='Canal', y='ROAS', marker='o', color=boticario_gold, linewidth=3, markersize=10, ax=ax2)
+ax2.set_ylabel('ROAS (Eficiência)', fontweight='bold', color=boticario_gold)
+
+# Labels na linha de ROAS
+for i, val in enumerate(df_canal['ROAS']):
+    ax2.text(i, val + 0.3, f'{val:.2f}x', color=boticario_green, fontweight='bold', ha='center')
+
+sns.despine(top=True, right=False, left=False)
+st.pyplot(fig1)
+
+# ---------------------------------------------------------
+# BLOCO 2: DEEP DIVE (PERFUMARIA E INFLUENCIADORES)
+# ---------------------------------------------------------
+st.header("2. O Desafio da Perfumaria")
+col_a, col_b = st.columns(2)
+
+with col_a:
+    # ROAS Perfumaria por Canal
+    df_perf = df[df['Categoria_Anunciada'] == 'Perfumaria'].groupby('Canal').agg({
+        'Investimento_Mkt': 'sum', 'Receita_Gerada': 'sum'
+    }).reset_index()
     df_perf['ROAS'] = df_perf['Receita_Gerada'] / df_perf['Investimento_Mkt']
+    df_perf = df_perf.sort_values('ROAS', ascending=False)
+
+    fig2, ax_perf = plt.subplots(figsize=(8, 6))
+    colors = [boticario_gold if (x == df_perf['ROAS'].max()) else boticario_green for x in df_perf['ROAS']]
+    sns.barplot(data=df_perf, x='Canal', y='ROAS', palette=colors, ax=ax_perf)
     
-    fig_perf = px.bar(df_perf, x='Canal', y='ROAS', title="ROAS em Perfumaria (Meta do Trimestre)", 
-                     color_discrete_sequence=['#004731'])
-    st.plotly_chart(fig_perf, use_container_width=True)
-    st.warning("Atenção: Influenciadores em Perfumaria operam com ROAS < 1.0 (0.84).")
-
-with col4:
-    # Influenciadores por Categoria
-    df_influ = df[df['Canal'] == 'Influenciadores'].groupby('Categoria_Anunciada').agg({'Investimento_Mkt': 'sum', 'Receita_Gerada': 'sum'}).reset_index()
-    df_influ['ROAS'] = df_influ['Receita_Gerada'] / df_influ['Investimento_Mkt']
-    
-    fig_influ = px.bar(df_influ, x='Categoria_Anunciada', y='ROAS', title="ROAS de Influenciadores por Categoria",
-                      color_discrete_sequence=['#D4AF37'])
-    st.plotly_chart(fig_influ, use_container_width=True)
-    st.write("Influenciadores performam melhor em **Maquiagem** do que em Perfumaria.")
-
-# ---------------------------------------------------------
-# CONCLUSÃO: Onde investir os R$ 50.000?
-# ---------------------------------------------------------
-st.markdown("---")
-st.header("3. Recomendação Final: Alocação de Verba Extra")
-
-c1, c2, c3 = st.columns(3)
-c1.success("🚀 **Google Search (70%)** \n Foco total em Perfumaria para bater a meta.")
-c2.info("💄 **Influenciadores (25%)** \n Foco em Maquiagem (onde o canal se paga).")
-c3.error("📉 **Programática (5%)** \n Redução de verba; manter apenas Remarketing.")
-
-st.balloons()
-
+    # Data Labels
+    for p in ax_perf.patches:
+        ax_perf.annotate(f'{p.get
