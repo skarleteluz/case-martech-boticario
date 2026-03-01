@@ -6,15 +6,18 @@ import plotly.graph_objects as go
 # --- FUNÇÕES DE FORMATAÇÃO (PADRÃO BRASILEIRO) ---
 def formata_br(valor, prefixo="R$ "):
     if pd.isna(valor): return "N/A"
+    # Formatação de milhar com ponto e decimal com vírgula
     formatado = f"{valor:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
     return f"{prefixo}{formatado}"
 
 def formata_num(valor):
+    # Formata apenas o número com vírgula decimal
     return f"{valor:.2f}".replace(".", ",")
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="Analytics Grupo Boticário", layout="wide")
 
+# Estilo visual Boticário
 st.markdown("""
     <style>
     .main { background-color: #ffffff; }
@@ -25,22 +28,26 @@ st.markdown("""
 
 @st.cache_data
 def load_data():
+    # O arquivo CSV deve estar na mesma pasta do script
     return pd.read_csv('Case_Midia_Produto.csv')
 
 df = load_data()
 
-# --- HEADER ---
+# --- CABEÇALHO ---
 st.image("https://upload.wikimedia.org/wikipedia/pt/e/e0/Logotipo_do_Grupo_Botic%C3%A1rio.png", width=200)
 st.title("📊 Relatório de Performance: Campanhas de Inverno")
+st.markdown("Análise de eficiência cruzada para suporte à decisão de alocação de verba extra.")
 st.markdown("---")
 
-# KPIs de Resumo
+# KPIs de Resumo no Topo
 k1, k2, k3 = st.columns(3)
 inv_total = df['Investimento_Mkt'].sum()
 rec_total = df['Receita_Gerada'].sum()
+roas_global = rec_total / inv_total
+
 k1.metric("Investimento Total (Spend)", formata_br(inv_total))
 k2.metric("Receita Total Gerada", formata_br(rec_total))
-k3.metric("ROAS Global", f"{formata_num(rec_total/inv_total)}x")
+k3.metric("ROAS Global", f"{formata_num(roas_global)}x")
 
 # --- SEÇÃO 1: EFICIÊNCIA POR CANAL ---
 st.header("1. Eficiência Real por Canal")
@@ -52,7 +59,7 @@ fig_canal.add_trace(go.Bar(x=df_canal['Canal'], y=df_canal['Investimento_Mkt'], 
 fig_canal.add_trace(go.Scatter(x=df_canal['Canal'], y=df_canal['ROAS'], name='ROAS', yaxis='y2', line=dict(color='#D4AF37', width=4), marker=dict(size=10)))
 
 fig_canal.update_layout(
-    title="Investimento vs. ROAS por Canal",
+    title="Visão por Canal: Gasto vs. ROAS",
     yaxis=dict(title="Investimento (R$)"),
     yaxis2=dict(title="ROAS", overlaying='y', side='right'),
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
@@ -70,7 +77,7 @@ fig_cat.add_trace(go.Bar(x=df_cat['Categoria_Anunciada'], y=df_cat['Investimento
 fig_cat.add_trace(go.Scatter(x=df_cat['Categoria_Anunciada'], y=df_cat['ROAS'], name='ROAS', yaxis='y2', line=dict(color='#004731', width=4), marker=dict(size=10)))
 
 fig_cat.update_layout(
-    title="Investimento vs. ROAS por Categoria de Produto",
+    title="Visão por Categoria: Gasto vs. ROAS",
     yaxis=dict(title="Investimento (R$)"),
     yaxis2=dict(title="ROAS", overlaying='y', side='right'),
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
@@ -78,8 +85,8 @@ fig_cat.update_layout(
 )
 st.plotly_chart(fig_cat, use_container_width=True)
 
-# --- SEÇÃO 3: CRUZAMENTO E AFINIDADE ---
-st.header("3. Cruzamento: Canal x Categoria")
+# --- SEÇÃO 3: CRUZAMENTO (CANAL X CATEGORIA) ---
+st.header("3. Cruzamento Detalhado: Onde cada canal brilha?")
 df_matriz = df.groupby(['Canal', 'Categoria_Anunciada']).agg({'Investimento_Mkt': 'sum', 'Receita_Gerada': 'sum'}).reset_index()
 df_matriz['ROAS'] = df_matriz['Receita_Gerada'] / df_matriz['Investimento_Mkt']
 
@@ -92,12 +99,25 @@ fig_matriz = px.bar(
 fig_matriz.update_layout(template="simple_white", separators=',.')
 st.plotly_chart(fig_matriz, use_container_width=True)
 
-# --- RECOMENDAÇÃO FINAL ---
+# --- SEÇÃO 4: RECOMENDAÇÃO FINAL (EXATAMENTE COMO VOCÊ PEDIU) ---
 st.markdown("---")
-st.header("4. Recomendação de Alocação (R$ 50.000 Extra)")
-c1, c2, c3 = st.columns(3)
-c1.success("**70% no Google Search**\n\nFoco em Perfumaria. ROAS histórico de 9,86x.")
-c2.warning("**20% em Influenciadores**\n\nFoco em Maquiagem. ROAS histórico de 3,99x.")
-c3.error("**10% em Programática**\n\nManter apenas para Remarketing de fundo de funil.")
+st.header("4. Recomendação de Alocação: R$ 50.000 Extra")
+
+rec_col1, rec_col2, rec_col3 = st.columns(3)
+
+with rec_col1:
+    st.success("🚀 **Prioridade 1: Google Search**")
+    st.write(f"Alocação sugerida: **{formata_br(35000)}**")
+    st.write(f"Foco: Perfumaria (ROAS {formata_num(9.86)}x).")
+
+with rec_col2:
+    st.warning("📸 **Prioridade 2: Influenciadores**")
+    st.write(f"Alocação sugerida: **{formata_br(10000)}**")
+    st.write(f"Foco: Maquiagem (ROAS {formata_num(3.99)}x).")
+
+with rec_col3:
+    st.error("📉 **Prioridade 3: Programática**")
+    st.write(f"Alocação sugerida: **{formata_br(5000)}**")
+    st.write("Foco: Remarketing de fundo de funil.")
 
 st.balloons()
