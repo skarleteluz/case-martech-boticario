@@ -93,7 +93,7 @@ with col_cat:
 # ---------------------------------------------------------
 # NOVO BLOCO: MATRIZ DE PERFORMANCE (CANAL X CATEGORIA)
 # ---------------------------------------------------------
-st.header("2. Onde cada Canal brilha? (Afinidade)")
+st.header("2. Onde cada Canal Performa Melhor?)")
 
 # Preparação dos dados agrupados por Canal e Categoria
 df_matriz = df.groupby(['Canal', 'Categoria_Anunciada']).agg({
@@ -158,4 +158,5 @@ with rec_col3:
     st.write("Foco: Remarketing de fundo de funil.")
 
 st.balloons()
+
 
