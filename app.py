@@ -87,15 +87,6 @@ with col_graf_cat:
     )
     st.plotly_chart(fig_cat, use_container_width=True)
 
-with col_insight_cat:
-    st.markdown(f"""
-    ### 💡 Racional de Portfólio
-    A categoria de **Perfumaria** não é apenas o foco do trimestre, é o ativo de **maior rentabilidade** do portfólio atual.
-    
-    * **Meta de Negócio:** Enquanto Maquiagem e Cabelos operam com ROAS saudáveis, a Perfumaria entrega a maior eficiência sobre o capital investido.
-    * **Poder de Tração:** Isso justifica o direcionamento majoritário da verba extra, pois a categoria possui a melhor resposta financeira imediata.
-    """)
-
 # --- SEÇÃO 3: CRUZAMENTO (CANAL X CATEGORIA) ---
 st.header("3. Cruzamento Detalhado: Onde cada canal brilha?")
 df_matriz = df.groupby(['Canal', 'Categoria_Anunciada']).agg({'Investimento_Mkt': 'sum', 'Receita_Gerada': 'sum'}).reset_index()
@@ -132,6 +123,7 @@ with rec_col3:
     st.write("Foco: Remarketing de fundo de funil.")
 
 st.balloons()
+
 
 
 
