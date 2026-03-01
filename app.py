@@ -1,4 +1,3 @@
-%%writefile app.py
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -115,3 +114,4 @@ c2.info("💄 **Influenciadores (25%)** \n Foco em Maquiagem (onde o canal se pa
 c3.error("📉 **Programática (5%)** \n Redução de verba; manter apenas Remarketing.")
 
 st.balloons()
+
