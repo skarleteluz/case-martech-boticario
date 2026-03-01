@@ -3,107 +3,119 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# --- FUNÇÕES DE FORMATAÇÃO (PADRÃO BRASILEIRO) ---
+# Funções auxiliares para formatação brasileira
 def formata_br(valor, prefixo="R$ "):
     if pd.isna(valor): return "N/A"
-    # Formatação de milhar com ponto e decimal com vírgula
     formatado = f"{valor:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
     return f"{prefixo}{formatado}"
 
 def formata_num(valor):
-    # Formata apenas o número com vírgula decimal
     return f"{valor:.2f}".replace(".", ",")
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Analytics Grupo Boticário", layout="wide")
+# Configuração da página e Identidade Visual
+st.set_page_config(page_title="Martech Analytics | Case Boticário", layout="wide")
 
-# Estilo visual Boticário
 st.markdown("""
     <style>
-    .main { background-color: #ffffff; }
+    .main { background-color: #f5f5f5; }
     h1, h2, h3 { color: #004731; font-family: 'Arial'; }
-    .stMetric { border-left: 5px solid #004731; background-color: #f9f9f9; padding: 20px; border-radius: 10px; }
+    .stMetric { background-color: #ffffff; padding: 20px; border-radius: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); border-left: 5px solid #004731; }
     </style>
     """, unsafe_allow_html=True)
 
 @st.cache_data
 def load_data():
-    # O arquivo CSV deve estar na mesma pasta do script
-    return pd.read_csv('Case_Midia_Produto.csv')
+    df = pd.read_csv('Case_Midia_Produto.csv')
+    return df
 
 df = load_data()
 
-# --- CABEÇALHO ---
-st.title("📊 Relatório de Performance: Campanhas de Inverno")
-st.markdown("Análise de eficiência cruzada para suporte à decisão de alocação de verba extra.")
-st.markdown("---")
-
-# KPIs de Resumo no Topo
-k1, k2, k3 = st.columns(3)
-inv_total = df['Investimento_Mkt'].sum()
-rec_total = df['Receita_Gerada'].sum()
-roas_global = rec_total / inv_total
-
-k1.metric("Investimento Total (Spend)", formata_br(inv_total))
-k2.metric("Receita Total Gerada", formata_br(rec_total))
-k3.metric("ROAS Global", f"{formata_num(roas_global)}x")
-
-# --- SEÇÃO 1: EFICIÊNCIA POR CANAL ---
-st.header("1. Eficiência Real por Canal")
+# Métricas consolidadas
 df_canal = df.groupby('Canal').agg({'Investimento_Mkt': 'sum', 'Receita_Gerada': 'sum'}).reset_index()
 df_canal['ROAS'] = df_canal['Receita_Gerada'] / df_canal['Investimento_Mkt']
 
-fig_canal = go.Figure()
-fig_canal.add_trace(go.Bar(x=df_canal['Canal'], y=df_canal['Investimento_Mkt'], name='Investimento (R$)', marker_color='#E2E2E2'))
-fig_canal.add_trace(go.Scatter(x=df_canal['Canal'], y=df_canal['ROAS'], name='ROAS', yaxis='y2', line=dict(color='#D4AF37', width=4), marker=dict(size=10)))
+# ---------------------------------------------------------
+# CABEÇALHO & KPIs
+# ---------------------------------------------------------
+st.title("📊 Dashboard de Performance: Campanhas de Inverno")
+st.markdown("---")
 
-fig_canal.update_layout(
-    title="Visão por Canal: Gasto vs. ROAS",
+kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+inv_total = df['Investimento_Mkt'].sum()
+rec_total = df['Receita_Gerada'].sum()
+roas_total = rec_total / inv_total
+
+kpi1.metric("Investimento Total", formata_br(inv_total))
+kpi2.metric("Receita Gerada", formata_br(rec_total))
+kpi3.metric("ROAS Geral", f"{formata_num(roas_total)}x")
+kpi4.metric("Status da Meta", "Foco Perfumaria")
+
+# ---------------------------------------------------------
+# BLOCO 1: VISÃO GERAL DE CANAIS
+# ---------------------------------------------------------
+st.header("1. Eficiência Real por Canal")
+fig_combo = go.Figure()
+fig_combo.add_trace(go.Bar(x=df_canal['Canal'], y=df_canal['Investimento_Mkt'], name='Investimento (R$)', marker_color='#E2E2E2'))
+fig_combo.add_trace(go.Scatter(x=df_canal['Canal'], y=df_canal['ROAS'], name='ROAS', yaxis='y2', line=dict(color='#D4AF37', width=4), marker=dict(size=10)))
+
+fig_combo.update_layout(
+    title="Volume de Investimento vs. Retorno (ROAS)",
     yaxis=dict(title="Investimento (R$)"),
     yaxis2=dict(title="ROAS", overlaying='y', side='right'),
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     template="simple_white", separators=',.'
 )
-st.plotly_chart(fig_canal, use_container_width=True)
+st.plotly_chart(fig_combo, use_container_width=True)
 
-# --- SEÇÃO 2: EFICIÊNCIA POR CATEGORIA ---
-st.header("2. Eficiência Real por Categoria")
-df_cat = df.groupby('Categoria_Anunciada').agg({'Investimento_Mkt': 'sum', 'Receita_Gerada': 'sum'}).reset_index()
-df_cat['ROAS'] = df_cat['Receita_Gerada'] / df_cat['Investimento_Mkt']
+# ---------------------------------------------------------
+# NOVO BLOCO: MATRIZ DE PERFORMANCE (CANAL X CATEGORIA)
+# ---------------------------------------------------------
+st.header("2. Onde cada Canal brilha? (Afinidade)")
 
-col_graf_cat, col_insight_cat = st.columns([2, 1])
-
-with col_graf_cat:
-    fig_cat = go.Figure()
-    fig_cat.add_trace(go.Bar(x=df_cat['Categoria_Anunciada'], y=df_cat['Investimento_Mkt'], name='Investimento (R$)', marker_color='#E2E2E2'))
-    fig_cat.add_trace(go.Scatter(x=df_cat['Categoria_Anunciada'], y=df_cat['ROAS'], name='ROAS', yaxis='y2', line=dict(color='#004731', width=4), marker=dict(size=10)))
-
-    fig_cat.update_layout(
-        title="Visão por Categoria: Gasto vs. ROAS",
-        yaxis=dict(title="Investimento (R$)"),
-        yaxis2=dict(title="ROAS", overlaying='y', side='right'),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        template="simple_white", separators=',.'
-    )
-    st.plotly_chart(fig_cat, use_container_width=True)
-
-# --- SEÇÃO 3: CRUZAMENTO (CANAL X CATEGORIA) ---
-st.header("3. Cruzamento Detalhado: Onde cada canal brilha?")
-df_matriz = df.groupby(['Canal', 'Categoria_Anunciada']).agg({'Investimento_Mkt': 'sum', 'Receita_Gerada': 'sum'}).reset_index()
+# Preparação dos dados agrupados por Canal e Categoria
+df_matriz = df.groupby(['Canal', 'Categoria_Anunciada']).agg({
+    'Investimento_Mkt': 'sum',
+    'Receita_Gerada': 'sum'
+}).reset_index()
 df_matriz['ROAS'] = df_matriz['Receita_Gerada'] / df_matriz['Investimento_Mkt']
 
 fig_matriz = px.bar(
-    df_matriz, x='Categoria_Anunciada', y='ROAS', color='Canal', barmode='group',
-    title='Comparativo de ROAS por Segmento',
-    color_discrete_map={'Google Search': '#004731', 'Influenciadores': '#D4AF37', 'Programática': '#C0C0C0'},
+    df_matriz, 
+    x='Categoria_Anunciada', 
+    y='ROAS', 
+    color='Canal', 
+    barmode='group',
+    title='Comparativo de ROAS: Categorias por Canal de Mídia',
+    color_discrete_map={
+        'Google Search': '#004731',      # Verde Boticário
+        'Influenciadores': '#D4AF37',    # Dourado
+        'Programática': '#C0C0C0'        # Cinza
+    },
     text_auto='.2f'
 )
-fig_matriz.update_layout(template="simple_white", separators=',.')
+
+fig_matriz.update_layout(
+    xaxis_title="Categoria do Produto",
+    yaxis_title="ROAS (Eficiência)",
+    legend_title="Canais",
+    template="simple_white",
+    separators=',.'
+)
+
 st.plotly_chart(fig_matriz, use_container_width=True)
 
-# --- SEÇÃO 4: RECOMENDAÇÃO FINAL (EXATAMENTE COMO VOCÊ PEDIU) ---
+st.info("""
+**Análise da Matriz:**
+- O **Google Search** domina a conversão em todas as categorias, especialmente em **Perfumaria**.
+- **Influenciadores** mostram excelente performance em **Maquiagem**, mas enfrentam desafios em Perfumaria.
+- A **Mídia Programática** tem uma performance linearmente baixa, sugerindo necessidade de revisão criativa ou de público.
+""")
+
+# ---------------------------------------------------------
+# BLOCO 3: CONCLUSÃO E RECOMENDAÇÃO
+# ---------------------------------------------------------
 st.markdown("---")
-st.header("4. Recomendação de Alocação: R$ 50.000 Extra")
+st.header("3. Recomendação de Alocação: R$ 50.000 Extra")
 
 rec_col1, rec_col2, rec_col3 = st.columns(3)
 
@@ -123,8 +135,3 @@ with rec_col3:
     st.write("Foco: Remarketing de fundo de funil.")
 
 st.balloons()
-
-
-
-
-
