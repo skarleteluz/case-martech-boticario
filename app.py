@@ -90,4 +90,50 @@ with col_a:
     
     # Data Labels
     for p in ax_perf.patches:
-        ax_perf.annotate(f'{p.get
+        ax_perf.annotate(f'{p.get_height():.2f}x', (p.get_x() + p.get_width()/2., p.get_height()),
+                         ha='center', va='bottom', fontweight='bold', xytext=(0, 5), textcoords='offset points')
+    
+    ax_perf.set_title("ROAS na Categoria Perfumaria", fontweight='bold', color=boticario_green)
+    ax_perf.axhline(1.0, color='red', linestyle='--', alpha=0.5) # Break-even
+    sns.despine()
+    st.pyplot(fig2)
+    st.caption("Nota: Influenciadores e Programática performam abaixo de 1.0x em Perfumaria.")
+
+with col_b:
+    # ROAS Influenciadores por Categoria
+    df_influ = df[df['Canal'] == 'Influenciadores'].groupby('Categoria_Anunciada').agg({
+        'Investimento_Mkt': 'sum', 'Receita_Gerada': 'sum'
+    }).reset_index()
+    df_influ['ROAS'] = df_influ['Receita_Gerada'] / df_influ['Investimento_Mkt']
+    
+    fig3, ax_influ = plt.subplots(figsize=(8, 6))
+    sns.barplot(data=df_influ, x='Categoria_Anunciada', y='ROAS', color=boticario_gold, ax=ax_influ)
+    
+    # Data Labels
+    for p in ax_influ.patches:
+        ax_influ.annotate(f'{p.get_height():.2f}x', (p.get_x() + p.get_width()/2., p.get_height()),
+                         ha='center', va='bottom', fontweight='bold', xytext=(0, 5), textcoords='offset points')
+        
+    ax_influ.set_title("Eficiência de Influenciadores por Categoria", fontweight='bold', color=boticario_green)
+    sns.despine()
+    st.pyplot(fig3)
+    st.caption("Insight: Influenciadores são motores de venda para Maquiagem.")
+
+# ---------------------------------------------------------
+# BLOCO 3: RECOMENDAÇÃO FINAL
+# ---------------------------------------------------------
+st.markdown("---")
+st.header("3. Recomendação de Alocação (R$ 50.000 Extra)")
+
+# Tabela Simples de Decisão
+st.table(pd.DataFrame({
+    'Canal': ['Google Search', 'Influenciadores', 'Mídia Programática'],
+    'Verba Sugerida': ['R$ 35.000 (70%)', 'R$ 10.000 (20%)', 'R$ 5.000 (10%)'],
+    'Racional': [
+        'Maximizar ROAS de 9.8x em Perfumaria.',
+        'Manter presença em Maquiagem (ROAS 3.9x).',
+        'Reduzir apenas para Remarketing (Baixa conversão).'
+    ]
+}))
+
+st.success("🎯 Foco em canais de intenção (Search) garante o atingimento da meta de Perfumaria.")
