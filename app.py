@@ -71,18 +71,21 @@ st.header("2. Eficiência Real por Categoria")
 df_cat = df.groupby('Categoria_Anunciada').agg({'Investimento_Mkt': 'sum', 'Receita_Gerada': 'sum'}).reset_index()
 df_cat['ROAS'] = df_cat['Receita_Gerada'] / df_cat['Investimento_Mkt']
 
-fig_cat = go.Figure()
-fig_cat.add_trace(go.Bar(x=df_cat['Categoria_Anunciada'], y=df_cat['Investimento_Mkt'], name='Investimento (R$)', marker_color='#E2E2E2'))
-fig_cat.add_trace(go.Scatter(x=df_cat['Categoria_Anunciada'], y=df_cat['ROAS'], name='ROAS', yaxis='y2', line=dict(color='#004731', width=4), marker=dict(size=10)))
+col_graf_cat, col_insight_cat = st.columns([2, 1])
 
-fig_cat.update_layout(
-    title="Visão por Categoria: Gasto vs. ROAS",
-    yaxis=dict(title="Investimento (R$)"),
-    yaxis2=dict(title="ROAS", overlaying='y', side='right'),
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-    template="simple_white", separators=',.'
-)
-st.plotly_chart(fig_cat, use_container_width=True)
+with col_graf_cat:
+    fig_cat = go.Figure()
+    fig_cat.add_trace(go.Bar(x=df_cat['Categoria_Anunciada'], y=df_cat['Investimento_Mkt'], name='Investimento (R$)', marker_color='#E2E2E2'))
+    fig_cat.add_trace(go.Scatter(x=df_cat['Categoria_Anunciada'], y=df_cat['ROAS'], name='ROAS', yaxis='y2', line=dict(color='#004731', width=4), marker=dict(size=10)))
+
+    fig_cat.update_layout(
+        title="Visão por Categoria: Gasto vs. ROAS",
+        yaxis=dict(title="Investimento (R$)"),
+        yaxis2=dict(title="ROAS", overlaying='y', side='right'),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        template="simple_white", separators=',.'
+    )
+    st.plotly_chart(fig_cat, use_container_width=True)
 
 with col_insight_cat:
     st.markdown(f"""
@@ -129,6 +132,7 @@ with rec_col3:
     st.write("Foco: Remarketing de fundo de funil.")
 
 st.balloons()
+
 
 
 
