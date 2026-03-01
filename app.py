@@ -48,7 +48,7 @@ roas_total = rec_total / inv_total
 kpi1.metric("Investimento Total", formata_br(inv_total))
 kpi2.metric("Receita Gerada", formata_br(rec_total))
 kpi3.metric("ROAS Geral", f"{formata_num(roas_total)}x")
-kpi4.metric("Status da Meta", "Foco Perfumaria")
+kpi4.metric("Meta", "Perfumaria")
 
 # ---------------------------------------------------------
 # BLOCO 1: VISÃO GERAL DE CANAIS
@@ -135,3 +135,4 @@ with rec_col3:
     st.write("Foco: Remarketing de fundo de funil.")
 
 st.balloons()
+
