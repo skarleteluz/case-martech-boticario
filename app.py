@@ -34,7 +34,7 @@ df = load_data()
 # NAVEGAÇÃO LATERAL
 # ---------------------------------------------------------
 st.sidebar.title("Navegação")
-pagina = st.sidebar.radio("Selecione a visualização:", ["Visão Geral", "Análise por Canal (Deep Dive)"])
+pagina = st.sidebar.radio("Selecione a visualização:", ["Visão Geral", "Análise por Canal"])
 
 # ---------------------------------------------------------
 # PÁGINA 1: VISÃO GERAL (SEU CÓDIGO ORIGINAL)
@@ -171,5 +171,6 @@ else:
 
     if canal_selecionado == "Influenciadores":
         st.warning("⚠️ **Observação Crítica:** Note que a categoria 'Cabelos' e 'Perfumaria' consomem uma verba significativa neste canal, mas o retorno (ROAS) não é tão alto.")
+
 
 
