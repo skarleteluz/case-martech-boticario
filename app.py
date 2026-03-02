@@ -170,4 +170,5 @@ else:
     st.table(df_tabela[['Categoria_Anunciada', 'Investimento_Mkt', 'Receita_Gerada', 'ROAS']])
 
     if canal_selecionado == "Influenciadores":
-        st.warning("⚠️ **Observação Crítica:** Note que a categoria 'Cabelos' consome uma verba significativa neste canal, mas o retorno (ROAS) é o mais baixo observado.")
+        st.warning("⚠️ **Observação Crítica:** Note que a categoria 'Cabelos' e 'Perfumaria' consomem uma verba significativa neste canal, mas o retorno (ROAS) não é tão alto.")
+
