@@ -76,7 +76,7 @@ if pagina == "Visão Geral":
         fig_cat.update_layout(title="Performance por Categoria", yaxis=dict(title="Investimento (R$)"), yaxis2=dict(title="ROAS", overlaying='y', side='right'), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1), template="simple_white", separators=',.')
         st.plotly_chart(fig_cat, use_container_width=True)
 
-    st.header("2. Onde cada Canal Performa Melhor?)")
+    st.header("2. Onde cada Canal Performa Melhor?")
     df_matriz = df.groupby(['Canal', 'Categoria_Anunciada']).agg({'Investimento_Mkt': 'sum', 'Receita_Gerada': 'sum'}).reset_index()
     df_matriz['ROAS'] = df_matriz['Receita_Gerada'] / df_matriz['Investimento_Mkt']
     fig_matriz = px.bar(df_matriz, x='Categoria_Anunciada', y='ROAS', color='Canal', barmode='group', title='Comparativo de ROAS: Categorias por Canal de Mídia', color_discrete_map={'Google Search': '#004731', 'Influenciadores': '#D4AF37', 'Programática': '#C0C0C0'}, text_auto='.2f')
@@ -171,4 +171,5 @@ else:
 
     if canal_selecionado == "Influenciadores":
         st.warning("⚠️ **Observação Crítica:** Note que a categoria 'Cabelos' e 'Perfumaria' consomem uma verba significativa neste canal, mas o retorno (ROAS) não é tão alto.")
+
 
